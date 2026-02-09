@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Match de Hospedagem - Checklist MVP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .checkbox-item:has(input:checked) label {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    .progress-bar {
+      transition: width 0.3s ease;
+    }
+    details[open] summary {
+      margin-bottom: 0.5rem;
+    }
+    summary {
+      cursor: pointer;
+    }
+    summary::-webkit-details-marker {
+      display: none;
+    }
+    summary::before {
+      content: '\25B6';
+      display: inline-block;
+      margin-right: 0.5rem;
+      transition: transform 0.2s;
+    }
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+    .nav-link {
+      transition: all 0.2s;
+    }
+    .nav-link:hover {
+      background-color: rgba(59, 130, 246, 0.2);
+    }
+    .nav-link.active {
+      background-color: rgba(59, 130, 246, 0.3);
+      border-left: 3px solid #3b82f6;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+  <div class="flex">
+
+    <!-- Sidebar Navigation -->
+    <nav class="w-64 min-h-screen bg-gray-800 border-r border-gray-700 fixed left-0 top-0 overflow-y-auto">
+      <div class="p-4 border-b border-gray-700">
+        <h1 class="text-lg font-bold text-white">Match de Hospedagem</h1>
+        <p class="text-xs text-gray-400 mt-1">Documentacao MVP</p>
+      </div>
+
+      <div class="p-2">
+        <p class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Navegacao</p>
+
+        <a href="index.html" class="nav-link active block px-3 py-2 rounded text-sm text-gray-300">
+          Visao Geral
+        </a>
+
+        <p class="px-3 py-2 mt-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Funcionalidades</p>
+
+        <a href="motor-de-regras.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Motor de Regras
+        </a>
+        <a href="autenticacao.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Autenticacao (Magic Link)
+        </a>
+        <a href="convites.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Sistema de Convites
+        </a>
+        <a href="grupos.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Grupos e Quartos
+        </a>
+        <a href="admin.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Painel Admin
+        </a>
+        <a href="auditoria.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Auditoria
+        </a>
+      </div>
+
+      <div class="p-4 border-t border-gray-700 mt-4">
+        <div class="text-xs text-gray-500">
+          <p>Progresso geral:</p>
+          <div class="mt-2 bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div id="sidebar-progress" class="progress-bar bg-green-500 h-full" style="width: 0%"></div>
+          </div>
+          <p id="sidebar-progress-text" class="mt-1 text-center">0%</p>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 p-8">
+      <div class="max-w-4xl">
+
+    <!-- Header -->
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold text-white mb-2">Match de Hospedagem</h1>
+      <p class="text-gray-400">Motor de Regras - Checklist MVP</p>
+      <div class="mt-4 flex items-center gap-4">
+        <div class="flex-1 bg-gray-700 rounded-full h-4 overflow-hidden">
+          <div id="global-progress" class="progress-bar bg-green-500 h-full" style="width: 0%"></div>
+        </div>
+        <span id="global-progress-text" class="text-sm font-mono text-green-400">0%</span>
+      </div>
+      <p id="global-stats" class="text-sm text-gray-500 mt-2"></p>
+    </header>
+
+    <!-- Sumario -->
+    <section class="mb-8 bg-gray-800 rounded-lg p-6">
+      <h2 class="text-xl font-semibold mb-4 text-white">Sumario do Projeto</h2>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="font-medium text-blue-400 mb-2">Objetivo</h3>
+          <p class="text-gray-300 text-sm">Emparelhar participantes para compartilhamento de quartos com base em regras configuraveis e preferencias pessoais.</p>
+        </div>
+
+        <div>
+          <h3 class="font-medium text-blue-400 mb-2">Abordagem MVP</h3>
+          <ul class="text-gray-300 text-sm space-y-1">
+            <li>- NAO usar IA inicialmente</li>
+            <li>- Sistema de regras + score explicavel</li>
+            <li>- Foco em transparencia e simplicidade</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mt-6 grid md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="font-medium text-orange-400 mb-2">Hard Constraints (Eliminatorias)</h3>
+          <ul class="text-gray-300 text-sm space-y-1">
+            <li>- Genero (se aplicavel)</li>
+            <li>- Solitario ("nao quero dividir")</li>
+            <li>- Acessibilidade</li>
+            <li>- Mesma empresa (quando exigido)</li>
+            <li>- Listas de bloqueio</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="font-medium text-purple-400 mb-2">Soft Preferences (Pontua/Ordena)</h3>
+          <ul class="text-gray-300 text-sm space-y-1">
+            <li>- Ronco/Sensibilidade a ruido</li>
+            <li>- Temperatura</li>
+            <li>- Rotina de sono</li>
+            <li>- Mesmo setor/area</li>
+            <li>- Horarios</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="font-medium text-green-400 mb-2">Estados do Match</h3>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="bg-gray-700 px-2 py-1 rounded">draft</span>
+          <span class="text-gray-500">-></span>
+          <span class="bg-gray-700 px-2 py-1 rounded">eligible</span>
+          <span class="text-gray-500">-></span>
+          <span class="bg-gray-700 px-2 py-1 rounded">suggested</span>
+          <span class="text-gray-500">-></span>
+          <span class="bg-gray-700 px-2 py-1 rounded">pending_acceptance</span>
+          <span class="text-gray-500">-></span>
+          <span class="bg-green-700 px-2 py-1 rounded">matched</span>
+          <span class="text-gray-500">-></span>
+          <span class="bg-red-700 px-2 py-1 rounded">locked</span>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="font-medium text-yellow-400 mb-2">Tabelas do Modulo</h3>
+        <div class="flex flex-wrap gap-2 text-xs font-mono">
+          <span class="bg-gray-700 px-2 py-1 rounded">match_evento_config</span>
+          <span class="bg-gray-700 px-2 py-1 rounded">match_pax</span>
+          <span class="bg-gray-700 px-2 py-1 rounded">match_perfil_preferencias</span>
+          <span class="bg-gray-700 px-2 py-1 rounded">match_quarto_grupo</span>
+          <span class="bg-gray-700 px-2 py-1 rounded">match_quarto_membro</span>
+          <span class="bg-gray-700 px-2 py-1 rounded">match_convite</span>
+          <span class="bg-gray-700 px-2 py-1 rounded">match_bloqueio</span>
+          <span class="bg-gray-700 px-2 py-1 rounded">match_auditoria</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cronograma -->
+    <section class="mb-8 bg-gray-800 rounded-lg p-6">
+      <h2 class="text-xl font-semibold mb-4 text-white">Cronograma 4 Dias</h2>
+      <div class="grid md:grid-cols-4 gap-4">
+        <div class="bg-gray-700 p-4 rounded">
+          <h4 class="font-medium text-blue-400">Dia 1</h4>
+          <p class="text-xs text-gray-400 mt-1">Config + CanInvite</p>
+        </div>
+        <div class="bg-gray-700 p-4 rounded">
+          <h4 class="font-medium text-green-400">Dia 2</h4>
+          <p class="text-xs text-gray-400 mt-1">CanAccept + Grupos</p>
+        </div>
+        <div class="bg-gray-700 p-4 rounded">
+          <h4 class="font-medium text-yellow-400">Dia 3</h4>
+          <p class="text-xs text-gray-400 mt-1">Desfazer + Lock</p>
+        </div>
+        <div class="bg-gray-700 p-4 rounded">
+          <h4 class="font-medium text-purple-400">Dia 4</h4>
+          <p class="text-xs text-gray-400 mt-1">Testes + Ajustes</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Checklists -->
+    <div class="space-y-4">
+
+      <!-- A) Infra/Projeto (Front) -->
+      <details class="bg-gray-800 rounded-lg overflow-hidden" open>
+        <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+          A) Infra/Projeto (Front)
+          <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-a"></span>
+        </summary>
+        <div class="p-4 space-y-2" id="section-a">
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="a1" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="a1" class="text-sm">npm install funciona sem erro</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="a2" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="a2" class="text-sm">npm run dev:guest sobe em http://localhost:5173</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="a3" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="a3" class="text-sm">npm run dev:admin sobe em http://localhost:5174</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="a4" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="a4" class="text-sm">.env.local.example existe com VITE_API_BASE_URL</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="a5" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="a5" class="text-sm">Nao existem arquivos .ts (somente .js)</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="a6" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="a6" class="text-sm">Rota: /g/:eventSlug?t=TOKEN</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="a7" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="a7" class="text-sm">Rota: /guest/perfil</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="a8" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="a8" class="text-sm">Rota: /guest/buscar</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="a9" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="a9" class="text-sm">Rota: /guest/convites</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="a10" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="a10" class="text-sm">Rota: /guest/quarto</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="a11" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="a11" class="text-sm">Rota: /admin/eventos</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="a12" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="a12" class="text-sm">Rota: /admin/eventos/:eventoId/dashboard</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="a13" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="a13" class="text-sm">Rota: /admin/eventos/:eventoId/import</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="a14" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="a14" class="text-sm">Rota: /admin/eventos/:eventoId/export</label>
+          </div>
+        </div>
+      </details>
+
+      <!-- B) Infra/Projeto (Back) -->
+      <details class="bg-gray-800 rounded-lg overflow-hidden">
+        <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+          B) Infra/Projeto (Back)
+          <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-b"></span>
+        </summary>
+        <div class="p-4 space-y-2" id="section-b">
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="b1" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="b1" class="text-sm">API sobe local/stage sem erro</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="b2" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="b2" class="text-sm">Migrations/DDL aplicadas no banco</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="b3" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="b3" class="text-sm">Tabela: match_hospedagem</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="b4" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="b4" class="text-sm">Tabela: match_grupo_quarto</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="b5" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="b5" class="text-sm">Tabela: match_convite</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="b6" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="b6" class="text-sm">Tabela: match_token</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="b7" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="b7" class="text-sm">Tabela: match_auditoria</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="b8" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="b8" class="text-sm">Coluna: match_hospedagem.magic_link</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="b9" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="b9" class="text-sm">Coluna: match_hospedagem.tipo_registro (PAX/CONFIG)</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="b10" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="b10" class="text-sm">Coluna: match_hospedagem.config_json</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="b11" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="b11" class="text-sm">Coluna: match_hospedagem.perfil_json</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="b12" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="b12" class="text-sm">Coluna: match_hospedagem.status_match, grupo_id, qtd_desfez</label>
+          </div>
+        </div>
+      </details>
+
+      <!-- C) Config do Evento -->
+      <details class="bg-gray-800 rounded-lg overflow-hidden">
+        <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+          C) Config do Evento (Rules JSON)
+          <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-c"></span>
+        </summary>
+        <div class="p-4 space-y-2" id="section-c">
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="c1" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="c1" class="text-sm">Existe 1 registro CONFIG por evento (unique)</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="c2" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="c2" class="text-sm">config_json tem defaults validos (capacidade, janela, convites, desfazer, lock)</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="c3" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="c3" class="text-sm">GET /admin/eventos/{eventoId}/config funciona</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="c4" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="c4" class="text-sm">PUT /admin/eventos/{eventoId}/config funciona</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="c5" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="c5" class="text-sm">Alterar config reflete nas regras aplicadas</label>
+          </div>
+        </div>
+      </details>
+
+      <!-- D) Importacao idempotente -->
+      <details class="bg-gray-800 rounded-lg overflow-hidden">
+        <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+          D) Importacao idempotente (Admin)
+          <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-d"></span>
+        </summary>
+        <div class="p-4 space-y-2" id="section-d">
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="d1" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="d1" class="text-sm">POST /admin/eventos/{eventoId}/importar-pax existe e funciona</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="d2" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="d2" class="text-sm">Filtra pax elegiveis (patrocinio hospedagem = sim)</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="d3" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="d3" class="text-sm">Filtra tipo_quarto != single</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="d4" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="d4" class="text-sm">Idempotente (rodar 2x nao duplica)</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="d5" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="d5" class="text-sm">Gera match_token + salva magic_link</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="d6" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="d6" class="text-sm">Escreve auditoria de import</label>
+          </div>
+        </div>
+      </details>
+
+      <!-- E) Autenticacao Guest -->
+      <details class="bg-gray-800 rounded-lg overflow-hidden">
+        <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+          E) Autenticacao Guest (Magic Link)
+          <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-e"></span>
+        </summary>
+        <div class="p-4 space-y-2" id="section-e">
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="e1" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="e1" class="text-sm">POST /guest/session valida token (hash) e cria sessao</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="e2" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="e2" class="text-sm">Token expirado mostra erro no Guest</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="e3" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="e3" class="text-sm">Regerar token revoga anterior</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="e4" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="e4" class="text-sm">Link funciona em mais de um dispositivo (MVP)</label>
+          </div>
+        </div>
+      </details>
+
+      <!-- F) Perfil e Preferencias -->
+      <details class="bg-gray-800 rounded-lg overflow-hidden">
+        <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+          F) Perfil e Preferencias (Guest)
+          <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-f"></span>
+        </summary>
+        <div class="p-4 space-y-2" id="section-f">
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="f1" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="f1" class="text-sm">GET /guest/me retorna status do pax, perfil e convites</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="f2" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="f2" class="text-sm">PUT /guest/perfil salva perfil_json</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="f3" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="f3" class="text-sm">Se perfil incompleto, impedir convite (regra do motor)</label>
+          </div>
+        </div>
+      </details>
+
+      <!-- G) Fluxo principal -->
+      <details class="bg-gray-800 rounded-lg overflow-hidden">
+        <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+          G) Fluxo principal "Quero ficar com fulano"
+          <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-g"></span>
+        </summary>
+        <div class="p-4 space-y-2" id="section-g">
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="g1" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="g1" class="text-sm">GET /guest/pessoas?query= retorna pax elegiveis do evento</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="g2" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="g2" class="text-sm">POST /guest/convites cria convite (status SENT) com expiracao</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="g3" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="g3" class="text-sm">Recebedor ve convite no Inbox</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="g4" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="g4" class="text-sm">POST /guest/convites/{id}/aceitar fecha match</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="g5" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="g5" class="text-sm">Cria/atribui match_grupo_quarto ao aceitar</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="g6" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="g6" class="text-sm">Atualiza match_hospedagem.grupo_id para ambos</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="g7" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="g7" class="text-sm">Atualiza status_match para MATCH_FECHADO</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="g8" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="g8" class="text-sm">POST /guest/convites/{id}/recusar funciona</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="g9" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="g9" class="text-sm">Convite expirado nao pode ser aceito (reason_code)</label>
+          </div>
+        </div>
+      </details>
+
+      <!-- H) Desfazer + Lock -->
+      <details class="bg-gray-800 rounded-lg overflow-hidden">
+        <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+          H) Desfazer + Lock
+          <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-h"></span>
+        </summary>
+        <div class="p-4 space-y-2" id="section-h">
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="h1" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="h1" class="text-sm">POST /guest/match/desfazer respeita janela (permitido_ate)</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="h2" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="h2" class="text-sm">Respeita limite max_por_pax</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="h3" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="h3" class="text-sm">Exige motivo (quando ativo)</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="h4" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="h4" class="text-sm">POST /admin/grupos/{id}/lock trava</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="h5" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="h5" class="text-sm">POST /admin/grupos/{id}/unlock destrava</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="h6" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="h6" class="text-sm">Guest nao desfaz quando locked (reason_code LOCKED)</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="h7" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="h7" class="text-sm">Auditoria registra lock/unlock/desfazer</label>
+          </div>
+        </div>
+      </details>
+
+      <!-- I) Admin Dashboard + Export -->
+      <details class="bg-gray-800 rounded-lg overflow-hidden">
+        <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+          I) Admin Dashboard + Export
+          <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-i"></span>
+        </summary>
+        <div class="p-4 space-y-2" id="section-i">
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="i1" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="i1" class="text-sm">GET /admin/eventos/{eventoId}/dashboard retorna contagens por status</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="i2" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="i2" class="text-sm">Lista pax com status e grupo (minimo)</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="i3" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="i3" class="text-sm">GET /admin/eventos/{eventoId}/export gera CSV consistente</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="i4" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="i4" class="text-sm">CSV contem: pax_id, nome/email, status_match, grupo_id, membros</label>
+          </div>
+        </div>
+      </details>
+
+      <!-- J) Auditoria e Seguranca -->
+      <details class="bg-gray-800 rounded-lg overflow-hidden">
+        <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+          J) Auditoria e Seguranca (minimo)
+          <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-j"></span>
+        </summary>
+        <div class="p-4 space-y-2" id="section-j">
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="j1" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="j1" class="text-sm">Nao logar token em texto</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="j2" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="j2" class="text-sm">magic_link nao aparece em logs; se exibir no admin, mascarar</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="j3" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="j3" class="text-sm">Auditoria: import</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="j4" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="j4" class="text-sm">Auditoria: gerar link</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="j5" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="j5" class="text-sm">Auditoria: convite</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="j6" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="j6" class="text-sm">Auditoria: aceitar</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="j7" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="j7" class="text-sm">Auditoria: recusar</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="j8" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="j8" class="text-sm">Auditoria: desfazer</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="j9" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="j9" class="text-sm">Auditoria: lock/unlock</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="j10" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="j10" class="text-sm">Auditoria: override</label>
+          </div>
+        </div>
+      </details>
+
+      <!-- K) Motor de Regras (Backend) -->
+      <details class="bg-gray-800 rounded-lg overflow-hidden">
+        <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+          K) Motor de Regras (Backend)
+          <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-k"></span>
+        </summary>
+        <div class="p-4 space-y-2" id="section-k">
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="k1" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="k1" class="text-sm">DTO MatchConfig criado com defaults</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="k2" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="k2" class="text-sm">ValidateConfig implementado</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="k3" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="k3" class="text-sm">CanInvite implementado</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="k4" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="k4" class="text-sm">CheckHardConstraints implementado</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="k5" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="k5" class="text-sm">CanAcceptInvite implementado</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="k6" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="k6" class="text-sm">CanUnmatch implementado</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="k7" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="k7" class="text-sm">Reason codes padronizados (OK, LOCKED, INVITE_EXPIRED, etc)</label>
+          </div>
+          <div class="checkbox-item flex items-start gap-3">
+            <input type="checkbox" id="k8" class="mt-1 w-4 h-4 accent-green-500">
+            <label for="k8" class="text-sm">RuleDecision retorna Allowed, Code, Message, Details</label>
+          </div>
+        </div>
+      </details>
+
+    </div>
+
+    <!-- Actions -->
+    <div class="mt-8 flex gap-4 flex-wrap">
+      <button onclick="resetAll()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-sm font-medium">
+        Resetar Tudo
+      </button>
+      <button onclick="exportState()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium">
+        Exportar JSON
+      </button>
+      <label class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-medium cursor-pointer">
+        Importar JSON
+        <input type="file" accept=".json" onchange="importState(event)" class="hidden">
+      </label>
+    </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-gray-700 text-center text-gray-500 text-sm">
+          <p>Match de Hospedagem - I GO Eventos</p>
+          <p class="mt-1">Motor de Regras MVP Checklist</p>
+        </footer>
+
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'match-hospedagem-checklist';
+
+    // Load state from localStorage
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved);
+        Object.keys(state).forEach(id => {
+          const checkbox = document.getElementById(id);
+          if (checkbox) checkbox.checked = state[id];
+        });
+      }
+    }
+
+    // Save state to localStorage
+    function saveState() {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      const state = {};
+      checkboxes.forEach(cb => {
+        state[cb.id] = cb.checked;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    // Update progress bars
+    function updateProgress() {
+      const sections = [
+        'section-a', 'section-b', 'section-c', 'section-d', 'section-e',
+        'section-f', 'section-g', 'section-h', 'section-i', 'section-j', 'section-k'
+      ];
+
+      let totalChecked = 0;
+      let totalItems = 0;
+
+      sections.forEach(sectionId => {
+        const section = document.getElementById(sectionId);
+        if (!section) return;
+
+        const checkboxes = section.querySelectorAll('input[type="checkbox"]');
+        const checked = section.querySelectorAll('input[type="checkbox"]:checked').length;
+        const total = checkboxes.length;
+
+        totalChecked += checked;
+        totalItems += total;
+
+        // Update section progress
+        const progressSpan = document.querySelector(`[data-section-progress="${sectionId}"]`);
+        if (progressSpan) {
+          const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+          progressSpan.textContent = `${checked}/${total} (${pct}%)`;
+          progressSpan.className = `float-right text-sm font-normal ${pct === 100 ? 'text-green-400' : 'text-gray-400'}`;
+        }
+      });
+
+      // Update global progress
+      const globalPct = totalItems > 0 ? Math.round((totalChecked / totalItems) * 100) : 0;
+      document.getElementById('global-progress').style.width = `${globalPct}%`;
+      document.getElementById('global-progress-text').textContent = `${globalPct}%`;
+      document.getElementById('global-stats').textContent = `${totalChecked} de ${totalItems} itens concluidos`;
+
+      // Update sidebar progress
+      const sidebarProgress = document.getElementById('sidebar-progress');
+      const sidebarProgressText = document.getElementById('sidebar-progress-text');
+      if (sidebarProgress) sidebarProgress.style.width = `${globalPct}%`;
+      if (sidebarProgressText) sidebarProgressText.textContent = `${globalPct}%`;
+    }
+
+    // Reset all checkboxes
+    function resetAll() {
+      if (!confirm('Tem certeza que deseja resetar todos os itens?')) return;
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+      saveState();
+      updateProgress();
+    }
+
+    // Export state as JSON file
+    function exportState() {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      const state = {};
+      checkboxes.forEach(cb => {
+        state[cb.id] = cb.checked;
+      });
+
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `match-checklist-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Import state from JSON file
+    function importState(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const state = JSON.parse(e.target.result);
+          Object.keys(state).forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) checkbox.checked = state[id];
+          });
+          saveState();
+          updateProgress();
+          alert('Estado importado com sucesso!');
+        } catch (err) {
+          alert('Erro ao importar arquivo: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      updateProgress();
+
+      // Add change listeners
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          saveState();
+          updateProgress();
+        });
+      });
+    });
+  </script>
+</body>
+</html>

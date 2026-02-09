@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Motor de Regras - Match de Hospedagem</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .checkbox-item:has(input:checked) label {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    .progress-bar {
+      transition: width 0.3s ease;
+    }
+    details[open] summary {
+      margin-bottom: 0.5rem;
+    }
+    summary {
+      cursor: pointer;
+    }
+    summary::-webkit-details-marker {
+      display: none;
+    }
+    summary::before {
+      content: '\25B6';
+      display: inline-block;
+      margin-right: 0.5rem;
+      transition: transform 0.2s;
+    }
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+    .nav-link {
+      transition: all 0.2s;
+    }
+    .nav-link:hover {
+      background-color: rgba(59, 130, 246, 0.2);
+    }
+    .nav-link.active {
+      background-color: rgba(59, 130, 246, 0.3);
+      border-left: 3px solid #3b82f6;
+    }
+    pre {
+      background-color: #1f2937;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+    code {
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+  <div class="flex">
+
+    <!-- Sidebar Navigation -->
+    <nav class="w-64 min-h-screen bg-gray-800 border-r border-gray-700 fixed left-0 top-0 overflow-y-auto">
+      <div class="p-4 border-b border-gray-700">
+        <h1 class="text-lg font-bold text-white">Match de Hospedagem</h1>
+        <p class="text-xs text-gray-400 mt-1">Documentacao MVP</p>
+      </div>
+
+      <div class="p-2">
+        <p class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Navegacao</p>
+
+        <a href="index.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Visao Geral
+        </a>
+
+        <p class="px-3 py-2 mt-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Funcionalidades</p>
+
+        <a href="motor-de-regras.html" class="nav-link active block px-3 py-2 rounded text-sm text-gray-300">
+          Motor de Regras
+        </a>
+        <a href="autenticacao.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Autenticacao (Magic Link)
+        </a>
+        <a href="convites.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Sistema de Convites
+        </a>
+        <a href="grupos.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Grupos e Quartos
+        </a>
+        <a href="admin.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Painel Admin
+        </a>
+        <a href="auditoria.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Auditoria
+        </a>
+      </div>
+
+      <div class="p-4 border-t border-gray-700 mt-4">
+        <div class="text-xs text-gray-500">
+          <p>Progresso desta pagina:</p>
+          <div class="mt-2 bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div id="page-progress" class="progress-bar bg-blue-500 h-full" style="width: 0%"></div>
+          </div>
+          <p id="page-progress-text" class="mt-1 text-center">0%</p>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 p-8">
+      <div class="max-w-4xl">
+
+        <!-- Header -->
+        <header class="mb-8">
+          <div class="flex items-center gap-2 text-sm text-gray-400 mb-2">
+            <a href="index.html" class="hover:text-blue-400">Inicio</a>
+            <span>/</span>
+            <span>Motor de Regras</span>
+          </div>
+          <h1 class="text-3xl font-bold text-white mb-2">Motor de Regras Configuravel</h1>
+          <p class="text-gray-400">Sistema de regras configuravel por evento para controle do fluxo de match</p>
+        </header>
+
+        <!-- Overview -->
+        <section class="mb-8 bg-gray-800 rounded-lg p-6">
+          <h2 class="text-xl font-semibold mb-4 text-white">Visao Geral</h2>
+
+          <div class="prose prose-invert max-w-none">
+            <p class="text-gray-300 mb-4">
+              O motor de regras e o coracao do sistema de match. Ele e responsavel por validar todas as acoes
+              (convidar, aceitar, desfazer) com base em configuracoes definidas por evento.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-4 mt-4">
+              <div class="bg-gray-700 p-4 rounded">
+                <h4 class="font-medium text-green-400 mb-2">Caracteristicas</h4>
+                <ul class="text-sm text-gray-300 space-y-1">
+                  <li>- Stateless (funcoes puras)</li>
+                  <li>- Configuravel por evento</li>
+                  <li>- Reason codes padronizados</li>
+                  <li>- Auditavel e explicavel</li>
+                </ul>
+              </div>
+              <div class="bg-gray-700 p-4 rounded">
+                <h4 class="font-medium text-blue-400 mb-2">Principio MVP</h4>
+                <ul class="text-sm text-gray-300 space-y-1">
+                  <li>- NAO usar IA</li>
+                  <li>- Regras explicaveis</li>
+                  <li>- Score transparente</li>
+                  <li>- Controle pela agencia</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Config JSON Schema -->
+        <section class="mb-8 bg-gray-800 rounded-lg p-6">
+          <h2 class="text-xl font-semibold mb-4 text-white">Schema do config_json</h2>
+
+          <p class="text-gray-400 text-sm mb-4">
+            Cada evento tem um registro CONFIG com o seguinte schema JSON:
+          </p>
+
+          <pre><code class="text-green-400">{
+  "versao": 1,
+
+  "perfil": {
+    "obrigatorio_para_convidar": true,
+    "campos_obrigatorios": ["sono_horario", "ronco", "temperatura", "ruido"]
+  },
+
+  "capacidade": {
+    "padrao": 2,
+    "permitidas": [2]
+  },
+
+  "janela_match": {
+    "inicio": null,
+    "fim": null
+  },
+
+  "convites": {
+    "expira_horas": 24,
+    "max_pendentes_por_pax": 5,
+    "bloquear_multiplos_convites_para_mesmo_alvo": true
+  },
+
+  "desfazer": {
+    "permitido_ate": null,
+    "max_por_pax": 1,
+    "exige_motivo": true
+  },
+
+  "lock": {
+    "automatico_em": null
+  },
+
+  "restricoes_duras": {
+    "politica_sexo": "ignorar",
+    "mesma_area": "ignorar"
+  }
+}</code></pre>
+        </section>
+
+        <!-- Reason Codes -->
+        <section class="mb-8 bg-gray-800 rounded-lg p-6">
+          <h2 class="text-xl font-semibold mb-4 text-white">Reason Codes</h2>
+
+          <p class="text-gray-400 text-sm mb-4">
+            Codigos padronizados retornados pelo motor em todas as decisoes:
+          </p>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <h4 class="font-medium text-green-400 mb-2">Sucesso</h4>
+              <div class="space-y-1 text-sm">
+                <div class="flex gap-2">
+                  <code class="bg-green-900 px-2 py-0.5 rounded text-green-300">OK</code>
+                  <span class="text-gray-400">Acao permitida</span>
+                </div>
+              </div>
+
+              <h4 class="font-medium text-yellow-400 mb-2 mt-4">Config</h4>
+              <div class="space-y-1 text-sm">
+                <div class="flex gap-2">
+                  <code class="bg-yellow-900 px-2 py-0.5 rounded text-yellow-300">CONFIG_NOT_FOUND</code>
+                </div>
+                <div class="flex gap-2">
+                  <code class="bg-yellow-900 px-2 py-0.5 rounded text-yellow-300">CONFIG_INVALID</code>
+                </div>
+                <div class="flex gap-2">
+                  <code class="bg-yellow-900 px-2 py-0.5 rounded text-yellow-300">EVENT_WINDOW_CLOSED</code>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 class="font-medium text-red-400 mb-2">Bloqueios</h4>
+              <div class="space-y-1 text-sm">
+                <div class="flex gap-2">
+                  <code class="bg-red-900 px-2 py-0.5 rounded text-red-300">PROFILE_INCOMPLETE</code>
+                </div>
+                <div class="flex gap-2">
+                  <code class="bg-red-900 px-2 py-0.5 rounded text-red-300">FROM_INELIGIBLE</code>
+                </div>
+                <div class="flex gap-2">
+                  <code class="bg-red-900 px-2 py-0.5 rounded text-red-300">TO_INELIGIBLE</code>
+                </div>
+                <div class="flex gap-2">
+                  <code class="bg-red-900 px-2 py-0.5 rounded text-red-300">FROM_ALREADY_MATCHED</code>
+                </div>
+                <div class="flex gap-2">
+                  <code class="bg-red-900 px-2 py-0.5 rounded text-red-300">TO_ALREADY_MATCHED</code>
+                </div>
+                <div class="flex gap-2">
+                  <code class="bg-red-900 px-2 py-0.5 rounded text-red-300">INVITE_LIMIT_REACHED</code>
+                </div>
+                <div class="flex gap-2">
+                  <code class="bg-red-900 px-2 py-0.5 rounded text-red-300">DUPLICATE_INVITE_BLOCKED</code>
+                </div>
+                <div class="flex gap-2">
+                  <code class="bg-red-900 px-2 py-0.5 rounded text-red-300">INVITE_EXPIRED</code>
+                </div>
+                <div class="flex gap-2">
+                  <code class="bg-red-900 px-2 py-0.5 rounded text-red-300">INVITE_NOT_PENDING</code>
+                </div>
+                <div class="flex gap-2">
+                  <code class="bg-red-900 px-2 py-0.5 rounded text-red-300">LOCKED</code>
+                </div>
+                <div class="flex gap-2">
+                  <code class="bg-red-900 px-2 py-0.5 rounded text-red-300">UNMATCH_DEADLINE_PASSED</code>
+                </div>
+                <div class="flex gap-2">
+                  <code class="bg-red-900 px-2 py-0.5 rounded text-red-300">UNMATCH_LIMIT_REACHED</code>
+                </div>
+              </div>
+
+              <h4 class="font-medium text-orange-400 mb-2 mt-4">Hard Constraints</h4>
+              <div class="space-y-1 text-sm">
+                <div class="flex gap-2">
+                  <code class="bg-orange-900 px-2 py-0.5 rounded text-orange-300">HARD_CONSTRAINT_SEX</code>
+                </div>
+                <div class="flex gap-2">
+                  <code class="bg-orange-900 px-2 py-0.5 rounded text-orange-300">HARD_CONSTRAINT_AREA</code>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Checklists -->
+        <div class="space-y-4">
+
+          <!-- 1) Schema e DTOs -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden" open>
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              1) Schema e DTOs do Config
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-1"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-1">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr1-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr1-1" class="text-sm">DTO MatchConfig criado com todos os campos</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr1-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr1-2" class="text-sm">DTO PerfilConfig (obrigatorio_para_convidar, campos_obrigatorios)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr1-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr1-3" class="text-sm">DTO CapacidadeConfig (padrao, permitidas)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr1-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr1-4" class="text-sm">DTO JanelaMatchConfig (inicio, fim)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr1-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr1-5" class="text-sm">DTO ConvitesConfig (expira_horas, max_pendentes_por_pax, bloquear_multiplos)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr1-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr1-6" class="text-sm">DTO DesfazerConfig (permitido_ate, max_por_pax, exige_motivo)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr1-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr1-7" class="text-sm">DTO LockConfig (automatico_em)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr1-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr1-8" class="text-sm">DTO RestricoesDurasConfig (politica_sexo, mesma_area)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr1-9" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr1-9" class="text-sm">Defaults aplicados quando campos estao null/ausentes</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr1-10" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr1-10" class="text-sm">Serializacao/Deserializacao JSON funciona corretamente</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 2) ValidateConfig -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              2) ValidateConfig
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-2"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-2">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr2-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr2-1" class="text-sm">Valida: capacidade.padrao esta em capacidade.permitidas</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr2-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr2-2" class="text-sm">Valida: convites.expira_horas > 0</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr2-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr2-3" class="text-sm">Valida: convites.max_pendentes_por_pax >= 0</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr2-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr2-4" class="text-sm">Valida: desfazer.max_por_pax >= 0</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr2-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr2-5" class="text-sm">Valida: janela_match.inicio <= janela_match.fim (quando ambos existem)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr2-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr2-6" class="text-sm">Valida: politica_sexo e um de ["ignorar", "mesmo", "misto"]</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr2-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr2-7" class="text-sm">Valida: mesma_area e um de ["ignorar", "obrigatorio", "preferivel"]</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr2-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr2-8" class="text-sm">Retorna lista de erros de validacao</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 3) CheckHardConstraints -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              3) CheckHardConstraints
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-3"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-3">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr3-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr3-1" class="text-sm">politica_sexo == "mesmo": valida paxA.sexo == paxB.sexo</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr3-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr3-2" class="text-sm">politica_sexo == "misto": valida paxA.sexo != paxB.sexo</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr3-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr3-3" class="text-sm">politica_sexo == "ignorar": nao verifica sexo</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr3-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr3-4" class="text-sm">mesma_area == "obrigatorio": valida paxA.area_id == paxB.area_id</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr3-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr3-5" class="text-sm">mesma_area == "ignorar": nao verifica area</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr3-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr3-6" class="text-sm">Retorna HARD_CONSTRAINT_SEX quando viola politica de sexo</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr3-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr3-7" class="text-sm">Retorna HARD_CONSTRAINT_AREA quando viola politica de area</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 4) CanInvite -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              4) CanInvite
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-4"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-4">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr4-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr4-1" class="text-sm">Verifica: config existe e e valida</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr4-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr4-2" class="text-sm">Verifica: janela de match esta aberta (now entre inicio e fim)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr4-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr4-3" class="text-sm">Verifica: from e elegivel (status != INELEGIVEL)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr4-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr4-4" class="text-sm">Verifica: to e elegivel (status != INELEGIVEL)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr4-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr4-5" class="text-sm">Verifica: from tem perfil completo (se obrigatorio_para_convidar)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr4-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr4-6" class="text-sm">Verifica: from nao esta MATCH_FECHADO / com grupo_id</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr4-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr4-7" class="text-sm">Verifica: to nao esta MATCH_FECHADO / com grupo_id</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr4-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr4-8" class="text-sm">Verifica: convites pendentes do from <= max_pendentes_por_pax</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr4-9" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr4-9" class="text-sm">Verifica: nao existe convite duplicado from->to pendente (se bloquear_multiplos)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr4-10" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr4-10" class="text-sm">Verifica: hard constraints passam (CheckHardConstraints)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr4-11" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr4-11" class="text-sm">Retorna RuleDecision com code/message corretos</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 5) CanAcceptInvite -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              5) CanAcceptInvite
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-5"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-5">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr5-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr5-1" class="text-sm">Verifica: convite existe</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr5-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr5-2" class="text-sm">Verifica: convite.status == SENT</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr5-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr5-3" class="text-sm">Verifica: convite nao expirado (created_at + expira_horas > now)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr5-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr5-4" class="text-sm">Verifica: janela de match esta aberta</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr5-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr5-5" class="text-sm">Verifica: from ainda elegivel</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr5-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr5-6" class="text-sm">Verifica: to ainda elegivel</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr5-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr5-7" class="text-sm">Verifica: ambos sem grupo (grupo_id == null)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr5-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr5-8" class="text-sm">Verifica: hard constraints ainda passam</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr5-9" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr5-9" class="text-sm">Retorna INVITE_EXPIRED quando expirado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr5-10" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr5-10" class="text-sm">Retorna INVITE_NOT_PENDING quando status != SENT</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 6) CanUnmatch -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              6) CanUnmatch
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-6"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-6">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr6-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr6-1" class="text-sm">Verifica: pax tem grupo_id != null</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr6-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr6-2" class="text-sm">Verifica: grupo nao esta LOCKED</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr6-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr6-3" class="text-sm">Verifica: permitido_ate nao passou (se configurado)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr6-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr6-4" class="text-sm">Verifica: pax.qtd_desfez < max_por_pax</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr6-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr6-5" class="text-sm">Verifica: motivo fornecido (se exige_motivo)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr6-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr6-6" class="text-sm">Retorna LOCKED quando grupo travado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr6-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr6-7" class="text-sm">Retorna UNMATCH_DEADLINE_PASSED quando fora do prazo</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr6-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr6-8" class="text-sm">Retorna UNMATCH_LIMIT_REACHED quando atingiu limite</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 7) RuleDecision -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              7) RuleDecision (Estrutura de Retorno)
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-7"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-7">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr7-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr7-1" class="text-sm">Record/DTO RuleDecision criado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr7-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr7-2" class="text-sm">Campo: Allowed (bool)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr7-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr7-3" class="text-sm">Campo: Code (string - reason code)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr7-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr7-4" class="text-sm">Campo: Message (string - mensagem legivel)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr7-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr7-5" class="text-sm">Campo: Details (Dictionary opcional - dados adicionais)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr7-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr7-6" class="text-sm">Serializa corretamente para JSON na API</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 8) Endpoints da API -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              8) Endpoints da API (Config)
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-8"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-8">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr8-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr8-1" class="text-sm">GET /admin/eventos/{eventoId}/config - retorna config atual</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr8-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr8-2" class="text-sm">PUT /admin/eventos/{eventoId}/config - atualiza config</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr8-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr8-3" class="text-sm">Validacao de config antes de salvar</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr8-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr8-4" class="text-sm">Retorna 400 com erros de validacao quando config invalida</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr8-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr8-5" class="text-sm">Cria registro CONFIG se nao existe (com defaults)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr8-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr8-6" class="text-sm">Auditoria de alteracao de config</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 9) Integracao com Endpoints de Acao -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              9) Integracao com Endpoints de Acao
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-9"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-9">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr9-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr9-1" class="text-sm">POST /guest/convites chama CanInvite antes de criar</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr9-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr9-2" class="text-sm">POST /guest/convites/{id}/aceitar chama CanAcceptInvite</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr9-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr9-3" class="text-sm">POST /guest/match/desfazer chama CanUnmatch</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr9-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr9-4" class="text-sm">Retorna 409 Conflict quando motor bloqueia acao</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr9-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr9-5" class="text-sm">Body do 409 inclui code e message do RuleDecision</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr9-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr9-6" class="text-sm">Frontend exibe mensagem amigavel baseada no code</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 10) Testes -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              10) Testes do Motor
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-10"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-10">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr10-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr10-1" class="text-sm">Teste: ValidateConfig com config valida</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr10-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr10-2" class="text-sm">Teste: ValidateConfig com config invalida</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr10-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr10-3" class="text-sm">Teste: CanInvite - caso feliz (OK)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr10-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr10-4" class="text-sm">Teste: CanInvite - janela fechada</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr10-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr10-5" class="text-sm">Teste: CanInvite - perfil incompleto</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr10-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr10-6" class="text-sm">Teste: CanInvite - limite de convites atingido</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr10-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr10-7" class="text-sm">Teste: CanInvite - hard constraint sexo</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr10-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr10-8" class="text-sm">Teste: CanAcceptInvite - caso feliz</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr10-9" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr10-9" class="text-sm">Teste: CanAcceptInvite - convite expirado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr10-10" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr10-10" class="text-sm">Teste: CanUnmatch - caso feliz</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr10-11" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr10-11" class="text-sm">Teste: CanUnmatch - grupo locked</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="mr10-12" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="mr10-12" class="text-sm">Teste: CanUnmatch - limite de desfazer atingido</label>
+              </div>
+            </div>
+          </details>
+
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-8 flex gap-4 flex-wrap">
+          <button onclick="resetAll()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-sm font-medium">
+            Resetar Tudo
+          </button>
+          <button onclick="exportState()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium">
+            Exportar JSON
+          </button>
+          <label class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-medium cursor-pointer">
+            Importar JSON
+            <input type="file" accept=".json" onchange="importState(event)" class="hidden">
+          </label>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-gray-700 text-center text-gray-500 text-sm">
+          <p>Match de Hospedagem - I GO Eventos</p>
+          <p class="mt-1">Motor de Regras - Documentacao Tecnica</p>
+        </footer>
+
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'match-motor-regras-checklist';
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved);
+        Object.keys(state).forEach(id => {
+          const checkbox = document.getElementById(id);
+          if (checkbox) checkbox.checked = state[id];
+        });
+      }
+    }
+
+    function saveState() {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      const state = {};
+      checkboxes.forEach(cb => {
+        state[cb.id] = cb.checked;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function updateProgress() {
+      const sections = [];
+      for (let i = 1; i <= 10; i++) {
+        sections.push(`section-${i}`);
+      }
+
+      let totalChecked = 0;
+      let totalItems = 0;
+
+      sections.forEach(sectionId => {
+        const section = document.getElementById(sectionId);
+        if (!section) return;
+
+        const checkboxes = section.querySelectorAll('input[type="checkbox"]');
+        const checked = section.querySelectorAll('input[type="checkbox"]:checked').length;
+        const total = checkboxes.length;
+
+        totalChecked += checked;
+        totalItems += total;
+
+        const progressSpan = document.querySelector(`[data-section-progress="${sectionId}"]`);
+        if (progressSpan) {
+          const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+          progressSpan.textContent = `${checked}/${total} (${pct}%)`;
+          progressSpan.className = `float-right text-sm font-normal ${pct === 100 ? 'text-green-400' : 'text-gray-400'}`;
+        }
+      });
+
+      const globalPct = totalItems > 0 ? Math.round((totalChecked / totalItems) * 100) : 0;
+      document.getElementById('page-progress').style.width = `${globalPct}%`;
+      document.getElementById('page-progress-text').textContent = `${globalPct}%`;
+    }
+
+    function resetAll() {
+      if (!confirm('Tem certeza que deseja resetar todos os itens desta pagina?')) return;
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+      saveState();
+      updateProgress();
+    }
+
+    function exportState() {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      const state = {};
+      checkboxes.forEach(cb => {
+        state[cb.id] = cb.checked;
+      });
+
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `motor-regras-checklist-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importState(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const state = JSON.parse(e.target.result);
+          Object.keys(state).forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) checkbox.checked = state[id];
+          });
+          saveState();
+          updateProgress();
+          alert('Estado importado com sucesso!');
+        } catch (err) {
+          alert('Erro ao importar arquivo: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      updateProgress();
+
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          saveState();
+          updateProgress();
+        });
+      });
+    });
+  </script>
+</body>
+</html>
