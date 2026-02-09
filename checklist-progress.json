@@ -1,6 +1,9 @@
 {
-  "description": "Estado das checklists baseado no codigo existente - Atualizado em 2026-02-09",
+  "description": "Estado das checklists baseado na analise detalhada do codigo - Atualizado em 2026-02-09",
+  "lastUpdated": "2026-02-09T17:30:00Z",
+
   "index": {
+    "_comment": "Visao Geral - checklist principal",
     "a1": true,
     "a2": true,
     "a3": true,
@@ -84,7 +87,9 @@
     "k7": false,
     "k8": false
   },
+
   "autenticacao": {
+    "_comment": "Autenticacao - Magic Link",
     "auth1-1": false,
     "auth1-2": false,
     "auth1-3": false,
@@ -122,13 +127,15 @@
     "auth6-4": false,
     "auth6-5": false,
     "auth7-1": false,
-    "auth7-2": false,
+    "auth7-2": true,
     "auth7-3": false,
     "auth7-4": false,
     "auth7-5": false,
-    "auth7-6": false
+    "auth7-6": true
   },
+
   "convites": {
+    "_comment": "Sistema de Convites",
     "conv1-1": false,
     "conv1-2": false,
     "conv1-3": false,
@@ -163,7 +170,7 @@
     "conv5-1": false,
     "conv5-2": false,
     "conv5-3": false,
-    "conv5-4": false,
+    "conv5-4": true,
     "conv6-1": true,
     "conv6-2": true,
     "conv6-3": true,
@@ -178,7 +185,7 @@
     "conv7-4": true,
     "conv7-5": true,
     "conv7-6": true,
-    "conv7-7": true,
+    "conv7-7": false,
     "conv7-8": true,
     "conv7-9": true,
     "conv8-1": true,
@@ -189,7 +196,9 @@
     "conv8-6": true,
     "conv8-7": true
   },
+
   "grupos": {
+    "_comment": "Grupos e Quartos",
     "grp1-1": false,
     "grp1-2": false,
     "grp1-3": false,
@@ -240,7 +249,9 @@
     "grp7-6": false,
     "grp7-7": false
   },
+
   "admin": {
+    "_comment": "Painel Admin",
     "adm1-1": false,
     "adm1-2": false,
     "adm1-3": false,
@@ -304,7 +315,9 @@
     "adm8-7": true,
     "adm8-8": true
   },
+
   "motor-de-regras": {
+    "_comment": "Motor de Regras - Backend C#",
     "mr1-1": false,
     "mr1-2": false,
     "mr1-3": false,
@@ -390,7 +403,9 @@
     "mr10-11": false,
     "mr10-12": false
   },
+
   "auditoria": {
+    "_comment": "Sistema de Auditoria - Backend",
     "aud1-1": false,
     "aud1-2": false,
     "aud1-3": false,
@@ -439,26 +454,70 @@
     "aud9-3": false,
     "aud9-4": false
   },
+
   "resumo": {
-    "frontend_guest": {
-      "total": 14,
-      "concluido": 14,
-      "descricao": "Rotas, stores, API client - 100% completo"
-    },
-    "frontend_admin": {
-      "total": 4,
-      "concluido": 4,
-      "descricao": "Rotas - 100% completo"
+    "total_itens": 446,
+    "frontend": {
+      "concluido": 85,
+      "total": 120,
+      "percentual": "71%"
     },
     "backend": {
-      "total": 70,
       "concluido": 0,
-      "descricao": "Tabelas, endpoints, motor - 0% (aguardando implementacao)"
+      "total": 326,
+      "percentual": "0%"
     },
-    "stores_pinia": {
-      "guest": ["authStore", "guestProfileStore", "guestInvitesStore"],
-      "admin": ["adminDashboardStore"],
-      "status": "100% implementados"
-    }
+    "detalhamento": {
+      "A_Infra_Front": { "done": 14, "total": 14, "pct": "100%" },
+      "B_Infra_Back": { "done": 0, "total": 12, "pct": "0%" },
+      "C_Config_Evento": { "done": 0, "total": 5, "pct": "0%" },
+      "D_Importacao": { "done": 0, "total": 6, "pct": "0%" },
+      "E_Auth_Backend": { "done": 0, "total": 4, "pct": "0%" },
+      "F_Perfil_Backend": { "done": 0, "total": 3, "pct": "0%" },
+      "G_Fluxo_Backend": { "done": 0, "total": 9, "pct": "0%" },
+      "H_Desfazer_Backend": { "done": 0, "total": 7, "pct": "0%" },
+      "I_Dashboard_Backend": { "done": 0, "total": 4, "pct": "0%" },
+      "J_Auditoria": { "done": 0, "total": 10, "pct": "0%" },
+      "K_Motor_Backend": { "done": 0, "total": 8, "pct": "0%" },
+      "Auth_Frontend": { "done": 15, "total": 43, "pct": "35%" },
+      "Convites_Frontend": { "done": 24, "total": 64, "pct": "38%" },
+      "Grupos_Frontend": { "done": 9, "total": 51, "pct": "18%" },
+      "Admin_Frontend": { "done": 23, "total": 67, "pct": "34%" },
+      "Motor_Regras": { "done": 0, "total": 88, "pct": "0%" },
+      "Auditoria": { "done": 0, "total": 51, "pct": "0%" }
+    },
+    "stores_implementados": [
+      "authStore (100%)",
+      "guestProfileStore (100%)",
+      "guestInvitesStore (100%)",
+      "adminDashboardStore (100%)"
+    ],
+    "pages_implementadas": {
+      "guest": [
+        "GuestLoginPage",
+        "GuestEntryPage",
+        "GuestErrorPage",
+        "GuestProfilePage",
+        "GuestFindRoommatePage",
+        "GuestInvitesPage",
+        "GuestRoomStatusPage",
+        "DevPanelPage"
+      ],
+      "admin": [
+        "AdminEventsListPage",
+        "AdminEventDashboardPage",
+        "AdminImportPage",
+        "AdminExportPage",
+        "AdminDevPanelPage"
+      ]
+    },
+    "pendente_backend": [
+      "Tabelas do banco de dados",
+      "Endpoints REST da API",
+      "Motor de regras (CanInvite, CanAccept, etc)",
+      "Sistema de auditoria",
+      "Autenticacao Magic Link (geracao/validacao)",
+      "Logica de grupos e lock"
+    ]
   }
 }
