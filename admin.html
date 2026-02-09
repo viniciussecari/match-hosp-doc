@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin - Match de Hospedagem</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .checkbox-item:has(input:checked) label {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    .progress-bar {
+      transition: width 0.3s ease;
+    }
+    details[open] summary {
+      margin-bottom: 0.5rem;
+    }
+    summary {
+      cursor: pointer;
+    }
+    summary::-webkit-details-marker {
+      display: none;
+    }
+    summary::before {
+      content: '\25B6';
+      display: inline-block;
+      margin-right: 0.5rem;
+      transition: transform 0.2s;
+    }
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+    .nav-link {
+      transition: all 0.2s;
+    }
+    .nav-link:hover {
+      background-color: rgba(59, 130, 246, 0.2);
+    }
+    .nav-link.active {
+      background-color: rgba(59, 130, 246, 0.3);
+      border-left: 3px solid #3b82f6;
+    }
+    pre {
+      background-color: #1f2937;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+    code {
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+  <div class="flex">
+
+    <!-- Sidebar Navigation -->
+    <nav class="w-64 min-h-screen bg-gray-800 border-r border-gray-700 fixed left-0 top-0 overflow-y-auto">
+      <div class="p-4 border-b border-gray-700">
+        <h1 class="text-lg font-bold text-white">Match de Hospedagem</h1>
+        <p class="text-xs text-gray-400 mt-1">Documentacao MVP</p>
+      </div>
+
+      <div class="p-2">
+        <p class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Navegacao</p>
+
+        <a href="index.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Visao Geral
+        </a>
+
+        <p class="px-3 py-2 mt-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Funcionalidades</p>
+
+        <a href="motor-de-regras.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Motor de Regras
+        </a>
+        <a href="autenticacao.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Autenticacao (Magic Link)
+        </a>
+        <a href="convites.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Sistema de Convites
+        </a>
+        <a href="grupos.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Grupos e Quartos
+        </a>
+        <a href="admin.html" class="nav-link active block px-3 py-2 rounded text-sm text-gray-300">
+          Painel Admin
+        </a>
+        <a href="auditoria.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Auditoria
+        </a>
+      </div>
+
+      <div class="p-4 border-t border-gray-700 mt-4">
+        <div class="text-xs text-gray-500">
+          <p>Progresso desta pagina:</p>
+          <div class="mt-2 bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div id="page-progress" class="progress-bar bg-blue-500 h-full" style="width: 0%"></div>
+          </div>
+          <p id="page-progress-text" class="mt-1 text-center">0%</p>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 p-8">
+      <div class="max-w-4xl">
+
+        <!-- Header -->
+        <header class="mb-8">
+          <div class="flex items-center gap-2 text-sm text-gray-400 mb-2">
+            <a href="index.html" class="hover:text-blue-400">Inicio</a>
+            <span>/</span>
+            <span>Painel Admin</span>
+          </div>
+          <h1 class="text-3xl font-bold text-white mb-2">Painel Admin</h1>
+          <p class="text-gray-400">Console operacional para agencia/cliente gerenciar o match</p>
+        </header>
+
+        <!-- Overview -->
+        <section class="mb-8 bg-gray-800 rounded-lg p-6">
+          <h2 class="text-xl font-semibold mb-4 text-white">Visao Geral</h2>
+
+          <div class="prose prose-invert max-w-none">
+            <p class="text-gray-300 mb-4">
+              O painel admin permite que a agencia/cliente gerencie todo o processo de match:
+              importar participantes, gerar links, visualizar status, travar grupos e exportar dados.
+            </p>
+
+            <div class="grid md:grid-cols-3 gap-4 mt-4">
+              <div class="bg-gray-700 p-4 rounded">
+                <h4 class="font-medium text-blue-400 mb-2">Dashboard</h4>
+                <ul class="text-sm text-gray-300 space-y-1">
+                  <li>- Visao geral do evento</li>
+                  <li>- Contadores por status</li>
+                  <li>- Lista de participantes</li>
+                </ul>
+              </div>
+              <div class="bg-gray-700 p-4 rounded">
+                <h4 class="font-medium text-green-400 mb-2">Importacao</h4>
+                <ul class="text-sm text-gray-300 space-y-1">
+                  <li>- Importar pax elegiveis</li>
+                  <li>- Gerar magic links</li>
+                  <li>- Idempotente</li>
+                </ul>
+              </div>
+              <div class="bg-gray-700 p-4 rounded">
+                <h4 class="font-medium text-yellow-400 mb-2">Export</h4>
+                <ul class="text-sm text-gray-300 space-y-1">
+                  <li>- Exportar rooming list</li>
+                  <li>- Formato CSV</li>
+                  <li>- Dados completos</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Endpoints -->
+        <section class="mb-8 bg-gray-800 rounded-lg p-6">
+          <h2 class="text-xl font-semibold mb-4 text-white">Endpoints Principais</h2>
+
+          <div class="space-y-4">
+            <div class="bg-gray-700 p-4 rounded">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-blue-600 px-2 py-0.5 rounded text-xs font-bold">GET</span>
+                <code class="text-white">/admin/eventos</code>
+              </div>
+              <p class="text-gray-400 text-sm">Lista eventos disponiveis para o admin</p>
+            </div>
+
+            <div class="bg-gray-700 p-4 rounded">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-blue-600 px-2 py-0.5 rounded text-xs font-bold">GET</span>
+                <code class="text-white">/admin/eventos/{eventoId}/dashboard</code>
+              </div>
+              <p class="text-gray-400 text-sm mb-2">Retorna dados do dashboard do evento</p>
+              <pre class="mt-2"><code class="text-blue-300">{
+  "evento": { "id": 67, "nome": "Convencao 2026" },
+  "contadores": {
+    "total": 150,
+    "sem_perfil": 45,
+    "pronto": 30,
+    "match_fechado": 70,
+    "travado": 5
+  },
+  "participantes": [
+    {
+      "paxId": 123,
+      "nome": "Joao Silva",
+      "email": "joao@email.com",
+      "statusMatch": "MATCH_FECHADO",
+      "grupoId": 789,
+      "parceiro": "Maria Santos"
+    }
+  ]
+}</code></pre>
+            </div>
+
+            <div class="bg-gray-700 p-4 rounded">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-green-600 px-2 py-0.5 rounded text-xs font-bold">POST</span>
+                <code class="text-white">/admin/eventos/{eventoId}/importar-pax</code>
+              </div>
+              <p class="text-gray-400 text-sm mb-2">Importa participantes elegiveis e gera magic links</p>
+              <pre class="mt-2"><code class="text-blue-300">// Response 200
+{
+  "importados": 45,
+  "ignorados": 5,
+  "erros": []
+}</code></pre>
+            </div>
+
+            <div class="bg-gray-700 p-4 rounded">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-blue-600 px-2 py-0.5 rounded text-xs font-bold">GET</span>
+                <code class="text-white">/admin/eventos/{eventoId}/export</code>
+              </div>
+              <p class="text-gray-400 text-sm">Exporta rooming list em CSV</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Checklists -->
+        <div class="space-y-4">
+
+          <!-- 1) Lista de Eventos -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden" open>
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              1) Lista de Eventos
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-1"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-1">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm1-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm1-1" class="text-sm">Endpoint GET /admin/eventos implementado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm1-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm1-2" class="text-sm">Filtra eventos por permissao do admin</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm1-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm1-3" class="text-sm">Retorna id, nome, data, status de cada evento</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm1-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm1-4" class="text-sm">AdminEventsListPage.vue criada</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm1-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm1-5" class="text-sm">Cards de evento com link para dashboard</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 2) Dashboard -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              2) Dashboard do Evento
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-2"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-2">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm2-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm2-1" class="text-sm">Endpoint GET /admin/eventos/{id}/dashboard implementado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm2-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm2-2" class="text-sm">Retorna contadores por status_match</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm2-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm2-3" class="text-sm">Retorna lista de participantes com status</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm2-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm2-4" class="text-sm">Inclui nome do parceiro quando tem match</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm2-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm2-5" class="text-sm">AdminEventDashboardPage.vue criada</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm2-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm2-6" class="text-sm">Cards com contadores (total, sem perfil, pronto, match, locked)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm2-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm2-7" class="text-sm">Tabela de participantes com filtros</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm2-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm2-8" class="text-sm">Filtro por status</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm2-9" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm2-9" class="text-sm">Busca por nome</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm2-10" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm2-10" class="text-sm">Paginacao da tabela</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 3) Importacao de Pax -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              3) Importacao de Participantes
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-3"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-3">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm3-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm3-1" class="text-sm">Endpoint POST /admin/eventos/{id}/importar-pax implementado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm3-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm3-2" class="text-sm">Busca pax da tabela de hospedagem do evento</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm3-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm3-3" class="text-sm">Filtra: patrocinio_hospedagem = sim</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm3-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm3-4" class="text-sm">Filtra: tipo_quarto != single</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm3-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm3-5" class="text-sm">Cria registro em match_hospedagem se nao existe</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm3-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm3-6" class="text-sm">Gera token + magic_link para novos registros</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm3-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm3-7" class="text-sm">Idempotente (rodar 2x nao duplica)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm3-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm3-8" class="text-sm">Retorna contagem: importados, ignorados, erros</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm3-9" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm3-9" class="text-sm">Registra auditoria da importacao</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm3-10" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm3-10" class="text-sm">AdminImportPage.vue criada</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm3-11" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm3-11" class="text-sm">Botao "Importar Participantes"</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm3-12" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm3-12" class="text-sm">Exibe resultado da importacao</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 4) Geracao de Links -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              4) Geracao de Magic Links
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-4"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-4">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm4-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm4-1" class="text-sm">Endpoint POST /admin/eventos/{id}/pax/{paxId}/gerar-magic-link</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm4-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm4-2" class="text-sm">Revoga token anterior se existir</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm4-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm4-3" class="text-sm">Gera novo token e atualiza magic_link</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm4-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm4-4" class="text-sm">Retorna magicLink e expiresAt</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm4-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm4-5" class="text-sm">Botao "Gerar Link" por pax no dashboard</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm4-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm4-6" class="text-sm">Modal com link mascarado + botao copiar</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm4-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm4-7" class="text-sm">Confirmacao antes de regerar</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 5) Lock/Unlock de Grupos -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              5) Lock/Unlock de Grupos
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-5"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-5">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm5-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm5-1" class="text-sm">Botao Lock/Unlock por grupo no dashboard</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm5-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm5-2" class="text-sm">Indicador visual de grupo travado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm5-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm5-3" class="text-sm">Acao em lote: travar todos os grupos</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm5-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm5-4" class="text-sm">Confirmacao antes de travar em lote</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 6) Export -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              6) Export (Rooming List)
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-6"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-6">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm6-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm6-1" class="text-sm">Endpoint GET /admin/eventos/{id}/export implementado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm6-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm6-2" class="text-sm">Retorna CSV com Content-Type correto</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm6-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm6-3" class="text-sm">Colunas: pax_id, nome, email, status_match, grupo_id</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm6-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm6-4" class="text-sm">Coluna: nome_parceiro (quando tem match)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm6-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm6-5" class="text-sm">Coluna: hotel (quando aplicavel)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm6-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm6-6" class="text-sm">AdminExportPage.vue criada</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm6-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm6-7" class="text-sm">Botao "Exportar CSV"</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm6-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm6-8" class="text-sm">Opcao de filtrar por status antes de exportar</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 7) Config do Evento -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              7) Configuracao do Evento
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-7"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-7">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm7-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm7-1" class="text-sm">Endpoint GET /admin/eventos/{id}/config</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm7-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm7-2" class="text-sm">Endpoint PUT /admin/eventos/{id}/config</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm7-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm7-3" class="text-sm">Tela de configuracao do evento</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm7-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm7-4" class="text-sm">Form para editar janela_match (inicio/fim)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm7-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm7-5" class="text-sm">Form para editar convites (expira_horas, max_pendentes)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm7-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm7-6" class="text-sm">Form para editar desfazer (permitido_ate, max_por_pax)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm7-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm7-7" class="text-sm">Form para editar lock (automatico_em)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm7-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm7-8" class="text-sm">Validacao antes de salvar</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 8) Pinia Store -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              8) Pinia Store (adminDashboardStore)
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-8"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-8">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm8-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm8-1" class="text-sm">Store adminDashboardStore.js criado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm8-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm8-2" class="text-sm">State: eventos, eventoAtual, participantes, contadores</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm8-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm8-3" class="text-sm">Action: fetchEventos()</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm8-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm8-4" class="text-sm">Action: fetchDashboard(eventoId)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm8-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm8-5" class="text-sm">Action: importarPax(eventoId)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm8-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm8-6" class="text-sm">Action: gerarMagicLink(eventoId, paxId)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm8-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm8-7" class="text-sm">Action: lockGrupo(grupoId)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="adm8-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="adm8-8" class="text-sm">Action: unlockGrupo(grupoId)</label>
+              </div>
+            </div>
+          </details>
+
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-8 flex gap-4 flex-wrap">
+          <button onclick="resetAll()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-sm font-medium">
+            Resetar Tudo
+          </button>
+          <button onclick="exportState()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium">
+            Exportar JSON
+          </button>
+          <label class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-medium cursor-pointer">
+            Importar JSON
+            <input type="file" accept=".json" onchange="importState(event)" class="hidden">
+          </label>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-gray-700 text-center text-gray-500 text-sm">
+          <p>Match de Hospedagem - I GO Eventos</p>
+          <p class="mt-1">Painel Admin - Documentacao Tecnica</p>
+        </footer>
+
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'match-admin-checklist';
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved);
+        Object.keys(state).forEach(id => {
+          const checkbox = document.getElementById(id);
+          if (checkbox) checkbox.checked = state[id];
+        });
+      }
+    }
+
+    function saveState() {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      const state = {};
+      checkboxes.forEach(cb => {
+        state[cb.id] = cb.checked;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function updateProgress() {
+      const sections = [];
+      for (let i = 1; i <= 8; i++) {
+        sections.push(`section-${i}`);
+      }
+
+      let totalChecked = 0;
+      let totalItems = 0;
+
+      sections.forEach(sectionId => {
+        const section = document.getElementById(sectionId);
+        if (!section) return;
+
+        const checkboxes = section.querySelectorAll('input[type="checkbox"]');
+        const checked = section.querySelectorAll('input[type="checkbox"]:checked').length;
+        const total = checkboxes.length;
+
+        totalChecked += checked;
+        totalItems += total;
+
+        const progressSpan = document.querySelector(`[data-section-progress="${sectionId}"]`);
+        if (progressSpan) {
+          const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+          progressSpan.textContent = `${checked}/${total} (${pct}%)`;
+          progressSpan.className = `float-right text-sm font-normal ${pct === 100 ? 'text-green-400' : 'text-gray-400'}`;
+        }
+      });
+
+      const globalPct = totalItems > 0 ? Math.round((totalChecked / totalItems) * 100) : 0;
+      document.getElementById('page-progress').style.width = `${globalPct}%`;
+      document.getElementById('page-progress-text').textContent = `${globalPct}%`;
+    }
+
+    function resetAll() {
+      if (!confirm('Tem certeza que deseja resetar todos os itens desta pagina?')) return;
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+      saveState();
+      updateProgress();
+    }
+
+    function exportState() {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      const state = {};
+      checkboxes.forEach(cb => {
+        state[cb.id] = cb.checked;
+      });
+
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `admin-checklist-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importState(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const state = JSON.parse(e.target.result);
+          Object.keys(state).forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) checkbox.checked = state[id];
+          });
+          saveState();
+          updateProgress();
+          alert('Estado importado com sucesso!');
+        } catch (err) {
+          alert('Erro ao importar arquivo: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      updateProgress();
+
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          saveState();
+          updateProgress();
+        });
+      });
+    });
+  </script>
+</body>
+</html>

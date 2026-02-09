@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grupos e Quartos - Match de Hospedagem</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .checkbox-item:has(input:checked) label {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    .progress-bar {
+      transition: width 0.3s ease;
+    }
+    details[open] summary {
+      margin-bottom: 0.5rem;
+    }
+    summary {
+      cursor: pointer;
+    }
+    summary::-webkit-details-marker {
+      display: none;
+    }
+    summary::before {
+      content: '\25B6';
+      display: inline-block;
+      margin-right: 0.5rem;
+      transition: transform 0.2s;
+    }
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+    .nav-link {
+      transition: all 0.2s;
+    }
+    .nav-link:hover {
+      background-color: rgba(59, 130, 246, 0.2);
+    }
+    .nav-link.active {
+      background-color: rgba(59, 130, 246, 0.3);
+      border-left: 3px solid #3b82f6;
+    }
+    pre {
+      background-color: #1f2937;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+    code {
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+  <div class="flex">
+
+    <!-- Sidebar Navigation -->
+    <nav class="w-64 min-h-screen bg-gray-800 border-r border-gray-700 fixed left-0 top-0 overflow-y-auto">
+      <div class="p-4 border-b border-gray-700">
+        <h1 class="text-lg font-bold text-white">Match de Hospedagem</h1>
+        <p class="text-xs text-gray-400 mt-1">Documentacao MVP</p>
+      </div>
+
+      <div class="p-2">
+        <p class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Navegacao</p>
+
+        <a href="index.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Visao Geral
+        </a>
+
+        <p class="px-3 py-2 mt-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Funcionalidades</p>
+
+        <a href="motor-de-regras.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Motor de Regras
+        </a>
+        <a href="autenticacao.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Autenticacao (Magic Link)
+        </a>
+        <a href="convites.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Sistema de Convites
+        </a>
+        <a href="grupos.html" class="nav-link active block px-3 py-2 rounded text-sm text-gray-300">
+          Grupos e Quartos
+        </a>
+        <a href="admin.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Painel Admin
+        </a>
+        <a href="auditoria.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Auditoria
+        </a>
+      </div>
+
+      <div class="p-4 border-t border-gray-700 mt-4">
+        <div class="text-xs text-gray-500">
+          <p>Progresso desta pagina:</p>
+          <div class="mt-2 bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div id="page-progress" class="progress-bar bg-blue-500 h-full" style="width: 0%"></div>
+          </div>
+          <p id="page-progress-text" class="mt-1 text-center">0%</p>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 p-8">
+      <div class="max-w-4xl">
+
+        <!-- Header -->
+        <header class="mb-8">
+          <div class="flex items-center gap-2 text-sm text-gray-400 mb-2">
+            <a href="index.html" class="hover:text-blue-400">Inicio</a>
+            <span>/</span>
+            <span>Grupos e Quartos</span>
+          </div>
+          <h1 class="text-3xl font-bold text-white mb-2">Grupos e Quartos</h1>
+          <p class="text-gray-400">Gerenciamento de grupos formados e funcionalidade de desfazer match</p>
+        </header>
+
+        <!-- Overview -->
+        <section class="mb-8 bg-gray-800 rounded-lg p-6">
+          <h2 class="text-xl font-semibold mb-4 text-white">Visao Geral</h2>
+
+          <div class="prose prose-invert max-w-none">
+            <p class="text-gray-300 mb-4">
+              Quando dois participantes aceitam mutuamente um convite, um grupo e criado automaticamente.
+              O grupo representa a alocacao do quarto e pode ser travado (locked) pela agencia.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-4 mt-4">
+              <div class="bg-gray-700 p-4 rounded">
+                <h4 class="font-medium text-green-400 mb-2">Status do Grupo</h4>
+                <div class="space-y-2 text-sm">
+                  <div class="flex items-center gap-2">
+                    <span class="bg-green-600 px-2 py-0.5 rounded text-xs font-bold">MATCHED</span>
+                    <span class="text-gray-300">Grupo formado, ativo</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="bg-red-600 px-2 py-0.5 rounded text-xs font-bold">LOCKED</span>
+                    <span class="text-gray-300">Travado, nao pode desfazer</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-gray-700 p-4 rounded">
+                <h4 class="font-medium text-blue-400 mb-2">Capacidade (MVP)</h4>
+                <ul class="text-sm text-gray-300 space-y-1">
+                  <li>- Padrao: 2 pessoas por quarto</li>
+                  <li>- Configuravel por evento</li>
+                  <li>- Grupo fecha quando atinge capacidade</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Endpoints -->
+        <section class="mb-8 bg-gray-800 rounded-lg p-6">
+          <h2 class="text-xl font-semibold mb-4 text-white">Endpoints</h2>
+
+          <div class="space-y-4">
+            <div class="bg-gray-700 p-4 rounded">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-blue-600 px-2 py-0.5 rounded text-xs font-bold">GET</span>
+                <code class="text-white">/guest/quarto</code>
+              </div>
+              <p class="text-gray-400 text-sm mb-2">Retorna informacoes do grupo/quarto do pax logado</p>
+              <pre class="mt-2"><code class="text-blue-300">// Response 200 (com grupo)
+{
+  "grupoId": 789,
+  "status": "MATCHED",
+  "membros": [
+    { "paxId": 100, "nome": "Joao Silva", "isMe": true },
+    { "paxId": 123, "nome": "Maria Santos", "isMe": false }
+  ],
+  "podeDesfazer": true,
+  "desfazerAte": "2026-02-15T23:59:59Z"
+}
+
+// Response 200 (sem grupo)
+{
+  "grupoId": null,
+  "status": null,
+  "membros": [],
+  "podeDesfazer": false
+}</code></pre>
+            </div>
+
+            <div class="bg-gray-700 p-4 rounded">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-green-600 px-2 py-0.5 rounded text-xs font-bold">POST</span>
+                <code class="text-white">/guest/match/desfazer</code>
+              </div>
+              <p class="text-gray-400 text-sm mb-2">Desfaz o match atual (sai do grupo)</p>
+              <pre class="mt-2"><code class="text-blue-300">// Request
+{ "motivo": "Prefiro ficar com outra pessoa" }
+
+// Response 200
+{
+  "success": true,
+  "message": "Match desfeito com sucesso"
+}
+
+// Response 409 (Motor bloqueou)
+{
+  "code": "LOCKED",
+  "message": "O grupo esta travado e nao pode ser desfeito"
+}</code></pre>
+            </div>
+
+            <div class="bg-gray-700 p-4 rounded">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-green-600 px-2 py-0.5 rounded text-xs font-bold">POST</span>
+                <code class="text-white">/admin/grupos/{id}/lock</code>
+              </div>
+              <p class="text-gray-400 text-sm mb-2">Trava o grupo (Admin)</p>
+            </div>
+
+            <div class="bg-gray-700 p-4 rounded">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-green-600 px-2 py-0.5 rounded text-xs font-bold">POST</span>
+                <code class="text-white">/admin/grupos/{id}/unlock</code>
+              </div>
+              <p class="text-gray-400 text-sm mb-2">Destrava o grupo (Admin)</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Checklists -->
+        <div class="space-y-4">
+
+          <!-- 1) Tabela match_grupo_quarto -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden" open>
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              1) Tabela match_grupo_quarto
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-1"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-1">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp1-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp1-1" class="text-sm">Tabela match_grupo_quarto criada</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp1-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp1-2" class="text-sm">Coluna: id (PK, auto-increment)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp1-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp1-3" class="text-sm">Coluna: evento_id (FK)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp1-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp1-4" class="text-sm">Coluna: status (MATCHED, LOCKED)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp1-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp1-5" class="text-sm">Coluna: capacidade (default 2)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp1-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp1-6" class="text-sm">Coluna: created_at, updated_at</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp1-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp1-7" class="text-sm">Coluna: locked_at, locked_by</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 2) Criacao de Grupo -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              2) Criacao de Grupo (ao aceitar convite)
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-2"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-2">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp2-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp2-1" class="text-sm">Criar grupo ao aceitar convite (dentro da transacao)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp2-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp2-2" class="text-sm">Status inicial: MATCHED</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp2-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp2-3" class="text-sm">Capacidade vem do config do evento</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp2-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp2-4" class="text-sm">Atualizar match_hospedagem.grupo_id para from e to</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp2-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp2-5" class="text-sm">Atualizar status_match para MATCH_FECHADO em ambos</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 3) Desfazer Match (Backend) -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              3) Desfazer Match (Backend)
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-3"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-3">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp3-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp3-1" class="text-sm">Endpoint POST /guest/match/desfazer implementado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp3-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp3-2" class="text-sm">Recebe motivo no body (quando exige_motivo)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp3-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp3-3" class="text-sm">Chama motor CanUnmatch</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp3-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp3-4" class="text-sm">Remove grupo_id do pax que desfez</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp3-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp3-5" class="text-sm">Atualiza status_match para PRONTO</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp3-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp3-6" class="text-sm">Incrementa qtd_desfez do pax</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp3-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp3-7" class="text-sm">Remove grupo_id do outro membro tambem</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp3-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp3-8" class="text-sm">Atualiza status do outro membro para PRONTO</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp3-9" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp3-9" class="text-sm">Deleta ou marca grupo como inativo</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp3-10" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp3-10" class="text-sm">Registra auditoria com motivo</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 4) Lock/Unlock (Admin) -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              4) Lock/Unlock (Admin)
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-4"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-4">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp4-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp4-1" class="text-sm">Endpoint POST /admin/grupos/{id}/lock implementado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp4-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp4-2" class="text-sm">Atualiza status para LOCKED</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp4-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp4-3" class="text-sm">Preenche locked_at e locked_by</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp4-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp4-4" class="text-sm">Endpoint POST /admin/grupos/{id}/unlock implementado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp4-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp4-5" class="text-sm">Atualiza status para MATCHED</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp4-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp4-6" class="text-sm">Limpa locked_at e locked_by</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp4-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp4-7" class="text-sm">Registra auditoria de lock/unlock</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 5) Lock Automatico -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              5) Lock Automatico
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-5"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-5">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp5-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp5-1" class="text-sm">Config: lock.automatico_em (datetime)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp5-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp5-2" class="text-sm">Job/Scheduler para lock automatico</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp5-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp5-3" class="text-sm">Travar todos os grupos MATCHED quando data passar</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp5-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp5-4" class="text-sm">Registrar auditoria como "LOCK_AUTOMATICO"</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 6) Frontend - Tela do Quarto -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              6) Frontend - Tela do Quarto
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-6"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-6">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp6-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp6-1" class="text-sm">GuestRoomStatusPage.vue criada</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp6-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp6-2" class="text-sm">Exibe status do match (com/sem grupo)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp6-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp6-3" class="text-sm">Lista membros do grupo com nomes</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp6-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp6-4" class="text-sm">Indicador visual de grupo LOCKED</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp6-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp6-5" class="text-sm">Botao "Desfazer Match" (quando podeDesfazer)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp6-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp6-6" class="text-sm">Modal de confirmacao com campo motivo</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp6-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp6-7" class="text-sm">Exibe data limite para desfazer</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp6-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp6-8" class="text-sm">Estado vazio "Voce ainda nao tem um quarto"</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp6-9" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp6-9" class="text-sm">Link para buscar companheiro quando sem grupo</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 7) Regras de Desfazer -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              7) Regras de Desfazer (Config)
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-7"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-7">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp7-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp7-1" class="text-sm">Config: desfazer.permitido_ate (datetime)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp7-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp7-2" class="text-sm">Config: desfazer.max_por_pax (int)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp7-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp7-3" class="text-sm">Config: desfazer.exige_motivo (bool)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp7-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp7-4" class="text-sm">Motor valida permitido_ate</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp7-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp7-5" class="text-sm">Motor valida max_por_pax contra qtd_desfez</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp7-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp7-6" class="text-sm">Motor valida motivo quando exige_motivo</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="grp7-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="grp7-7" class="text-sm">Motor valida grupo nao LOCKED</label>
+              </div>
+            </div>
+          </details>
+
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-8 flex gap-4 flex-wrap">
+          <button onclick="resetAll()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-sm font-medium">
+            Resetar Tudo
+          </button>
+          <button onclick="exportState()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium">
+            Exportar JSON
+          </button>
+          <label class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-medium cursor-pointer">
+            Importar JSON
+            <input type="file" accept=".json" onchange="importState(event)" class="hidden">
+          </label>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-gray-700 text-center text-gray-500 text-sm">
+          <p>Match de Hospedagem - I GO Eventos</p>
+          <p class="mt-1">Grupos e Quartos - Documentacao Tecnica</p>
+        </footer>
+
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'match-grupos-checklist';
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved);
+        Object.keys(state).forEach(id => {
+          const checkbox = document.getElementById(id);
+          if (checkbox) checkbox.checked = state[id];
+        });
+      }
+    }
+
+    function saveState() {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      const state = {};
+      checkboxes.forEach(cb => {
+        state[cb.id] = cb.checked;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function updateProgress() {
+      const sections = [];
+      for (let i = 1; i <= 7; i++) {
+        sections.push(`section-${i}`);
+      }
+
+      let totalChecked = 0;
+      let totalItems = 0;
+
+      sections.forEach(sectionId => {
+        const section = document.getElementById(sectionId);
+        if (!section) return;
+
+        const checkboxes = section.querySelectorAll('input[type="checkbox"]');
+        const checked = section.querySelectorAll('input[type="checkbox"]:checked').length;
+        const total = checkboxes.length;
+
+        totalChecked += checked;
+        totalItems += total;
+
+        const progressSpan = document.querySelector(`[data-section-progress="${sectionId}"]`);
+        if (progressSpan) {
+          const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+          progressSpan.textContent = `${checked}/${total} (${pct}%)`;
+          progressSpan.className = `float-right text-sm font-normal ${pct === 100 ? 'text-green-400' : 'text-gray-400'}`;
+        }
+      });
+
+      const globalPct = totalItems > 0 ? Math.round((totalChecked / totalItems) * 100) : 0;
+      document.getElementById('page-progress').style.width = `${globalPct}%`;
+      document.getElementById('page-progress-text').textContent = `${globalPct}%`;
+    }
+
+    function resetAll() {
+      if (!confirm('Tem certeza que deseja resetar todos os itens desta pagina?')) return;
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+      saveState();
+      updateProgress();
+    }
+
+    function exportState() {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      const state = {};
+      checkboxes.forEach(cb => {
+        state[cb.id] = cb.checked;
+      });
+
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `grupos-checklist-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importState(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const state = JSON.parse(e.target.result);
+          Object.keys(state).forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) checkbox.checked = state[id];
+          });
+          saveState();
+          updateProgress();
+          alert('Estado importado com sucesso!');
+        } catch (err) {
+          alert('Erro ao importar arquivo: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      updateProgress();
+
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          saveState();
+          updateProgress();
+        });
+      });
+    });
+  </script>
+</body>
+</html>

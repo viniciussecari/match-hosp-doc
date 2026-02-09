@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autenticacao - Match de Hospedagem</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .checkbox-item:has(input:checked) label {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    .progress-bar {
+      transition: width 0.3s ease;
+    }
+    details[open] summary {
+      margin-bottom: 0.5rem;
+    }
+    summary {
+      cursor: pointer;
+    }
+    summary::-webkit-details-marker {
+      display: none;
+    }
+    summary::before {
+      content: '\25B6';
+      display: inline-block;
+      margin-right: 0.5rem;
+      transition: transform 0.2s;
+    }
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+    .nav-link {
+      transition: all 0.2s;
+    }
+    .nav-link:hover {
+      background-color: rgba(59, 130, 246, 0.2);
+    }
+    .nav-link.active {
+      background-color: rgba(59, 130, 246, 0.3);
+      border-left: 3px solid #3b82f6;
+    }
+    pre {
+      background-color: #1f2937;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+    code {
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+  <div class="flex">
+
+    <!-- Sidebar Navigation -->
+    <nav class="w-64 min-h-screen bg-gray-800 border-r border-gray-700 fixed left-0 top-0 overflow-y-auto">
+      <div class="p-4 border-b border-gray-700">
+        <h1 class="text-lg font-bold text-white">Match de Hospedagem</h1>
+        <p class="text-xs text-gray-400 mt-1">Documentacao MVP</p>
+      </div>
+
+      <div class="p-2">
+        <p class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Navegacao</p>
+
+        <a href="index.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Visao Geral
+        </a>
+
+        <p class="px-3 py-2 mt-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Funcionalidades</p>
+
+        <a href="motor-de-regras.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Motor de Regras
+        </a>
+        <a href="autenticacao.html" class="nav-link active block px-3 py-2 rounded text-sm text-gray-300">
+          Autenticacao (Magic Link)
+        </a>
+        <a href="convites.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Sistema de Convites
+        </a>
+        <a href="grupos.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Grupos e Quartos
+        </a>
+        <a href="admin.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Painel Admin
+        </a>
+        <a href="auditoria.html" class="nav-link block px-3 py-2 rounded text-sm text-gray-300">
+          Auditoria
+        </a>
+      </div>
+
+      <div class="p-4 border-t border-gray-700 mt-4">
+        <div class="text-xs text-gray-500">
+          <p>Progresso desta pagina:</p>
+          <div class="mt-2 bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div id="page-progress" class="progress-bar bg-blue-500 h-full" style="width: 0%"></div>
+          </div>
+          <p id="page-progress-text" class="mt-1 text-center">0%</p>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 p-8">
+      <div class="max-w-4xl">
+
+        <!-- Header -->
+        <header class="mb-8">
+          <div class="flex items-center gap-2 text-sm text-gray-400 mb-2">
+            <a href="index.html" class="hover:text-blue-400">Inicio</a>
+            <span>/</span>
+            <span>Autenticacao</span>
+          </div>
+          <h1 class="text-3xl font-bold text-white mb-2">Autenticacao (Magic Link)</h1>
+          <p class="text-gray-400">Sistema de autenticacao sem senha via token temporario</p>
+        </header>
+
+        <!-- Overview -->
+        <section class="mb-8 bg-gray-800 rounded-lg p-6">
+          <h2 class="text-xl font-semibold mb-4 text-white">Visao Geral</h2>
+
+          <div class="prose prose-invert max-w-none">
+            <p class="text-gray-300 mb-4">
+              O sistema de autenticacao usa Magic Links - tokens unicos enviados por email que permitem
+              acesso direto sem necessidade de criar conta ou lembrar senha.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-4 mt-4">
+              <div class="bg-gray-700 p-4 rounded">
+                <h4 class="font-medium text-green-400 mb-2">Vantagens</h4>
+                <ul class="text-sm text-gray-300 space-y-1">
+                  <li>- Sem fricao ("qual minha senha?")</li>
+                  <li>- Funciona standalone e integrado</li>
+                  <li>- Nao precisa SSO do .NET</li>
+                  <li>- Seguro (token expiravel)</li>
+                </ul>
+              </div>
+              <div class="bg-gray-700 p-4 rounded">
+                <h4 class="font-medium text-blue-400 mb-2">Fluxo do Hospede</h4>
+                <ul class="text-sm text-gray-300 space-y-1">
+                  <li>1. Agencia dispara convite</li>
+                  <li>2. Link contem token criptografado</li>
+                  <li>3. Hospede clica e acessa</li>
+                  <li>4. Backend valida e cria sessao</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Token Structure -->
+        <section class="mb-8 bg-gray-800 rounded-lg p-6">
+          <h2 class="text-xl font-semibold mb-4 text-white">Estrutura do Token</h2>
+
+          <p class="text-gray-400 text-sm mb-4">
+            O token e um UUID criptografado contendo dados do participante:
+          </p>
+
+          <pre><code class="text-green-400">{
+  "uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "pax_id": 12345,
+  "evento_id": 67,
+  "agencia_id": 1,
+  "cliente_id": 42,
+  "created_at": "2026-02-09T10:00:00Z",
+  "expires_at": "2026-03-09T10:00:00Z"
+}</code></pre>
+
+          <div class="mt-4 p-4 bg-yellow-900/30 border border-yellow-700 rounded">
+            <p class="text-yellow-400 text-sm">
+              <strong>Seguranca:</strong> O token e criptografado antes de ser enviado.
+              O backend descriptografa para validar. Isso evita sabotagem no link.
+            </p>
+          </div>
+        </section>
+
+        <!-- Endpoints -->
+        <section class="mb-8 bg-gray-800 rounded-lg p-6">
+          <h2 class="text-xl font-semibold mb-4 text-white">Endpoints</h2>
+
+          <div class="space-y-4">
+            <div class="bg-gray-700 p-4 rounded">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-green-600 px-2 py-0.5 rounded text-xs font-bold">POST</span>
+                <code class="text-white">/guest/session</code>
+              </div>
+              <p class="text-gray-400 text-sm mb-2">Valida token e cria sessao</p>
+              <pre class="mt-2"><code class="text-blue-300">// Request
+{ "token": "eyJhbGciOiJBRVMuLi4" }
+
+// Response 200
+{
+  "sessionToken": "jwt_token_here",
+  "expiresAt": "2026-02-09T22:00:00Z",
+  "pax": {
+    "id": 12345,
+    "nome": "Joao Silva",
+    "email": "joao@email.com",
+    "eventoId": 67,
+    "statusMatch": "PRONTO"
+  }
+}
+
+// Response 401
+{
+  "code": "TOKEN_EXPIRED",
+  "message": "Link expirado. Solicite um novo."
+}</code></pre>
+            </div>
+
+            <div class="bg-gray-700 p-4 rounded">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-green-600 px-2 py-0.5 rounded text-xs font-bold">POST</span>
+                <code class="text-white">/admin/eventos/{id}/pax/{paxId}/gerar-magic-link</code>
+              </div>
+              <p class="text-gray-400 text-sm mb-2">Gera novo magic link para um participante (Admin)</p>
+              <pre class="mt-2"><code class="text-blue-300">// Response 200
+{
+  "magicLink": "https://match.igoeventos.com/g/evento-2026?t=eyJhbGci...",
+  "expiresAt": "2026-03-09T10:00:00Z"
+}</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- Checklists -->
+        <div class="space-y-4">
+
+          <!-- 1) Geracao do Token -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden" open>
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              1) Geracao do Token (Backend)
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-1"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-1">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth1-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth1-1" class="text-sm">Tabela match_token criada com campos: id, pax_id, evento_id, token_hash, expires_at, created_at, revoked_at</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth1-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth1-2" class="text-sm">Geracao de UUID unico por token</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth1-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth1-3" class="text-sm">Criptografia AES do payload do token</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth1-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth1-4" class="text-sm">Hash do token salvo no banco (nao salvar token em texto)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth1-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth1-5" class="text-sm">Expiracao configuravel (default 30 dias)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth1-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth1-6" class="text-sm">Registro de auditoria na geracao</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 2) Validacao do Token -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              2) Validacao do Token (Backend)
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-2"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-2">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth2-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth2-1" class="text-sm">Endpoint POST /guest/session implementado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth2-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth2-2" class="text-sm">Descriptografa token recebido</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth2-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth2-3" class="text-sm">Valida hash do token no banco</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth2-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth2-4" class="text-sm">Verifica se token nao esta expirado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth2-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth2-5" class="text-sm">Verifica se token nao foi revogado</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth2-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth2-6" class="text-sm">Verifica se pax existe e esta elegivel</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth2-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth2-7" class="text-sm">Retorna dados do pax junto com sessao</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth2-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth2-8" class="text-sm">Gera JWT de sessao com expiracao curta (12h)</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 3) Revogacao -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              3) Revogacao de Token
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-3"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-3">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth3-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth3-1" class="text-sm">Gerar novo token revoga token anterior automaticamente</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth3-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth3-2" class="text-sm">Admin pode revogar token manualmente</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth3-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth3-3" class="text-sm">Campo revoked_at preenchido na revogacao</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth3-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth3-4" class="text-sm">Auditoria registra revogacao com motivo</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 4) Frontend Guest -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              4) Frontend Guest
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-4"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-4">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth4-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth4-1" class="text-sm">Rota /g/:eventSlug?t=TOKEN captura token da URL</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth4-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth4-2" class="text-sm">GuestEntryPage.vue chama POST /guest/session</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth4-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth4-3" class="text-sm">authStore salva sessionToken, pax, expiresAt</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth4-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth4-4" class="text-sm">sessionToken persistido no localStorage</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth4-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth4-5" class="text-sm">Redirect para /guest/perfil em caso de sucesso</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth4-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth4-6" class="text-sm">Redirect para /guest/erro em caso de falha</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth4-7" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth4-7" class="text-sm">GuestErrorPage.vue exibe mensagem "Link expirado ou invalido"</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth4-8" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth4-8" class="text-sm">apiClient.js anexa Authorization Bearer em todas as requests</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 5) Guards de Rota -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              5) Guards de Rota (Frontend)
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-5"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-5">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth5-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth5-1" class="text-sm">Navigation guard verifica se sessao existe</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth5-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth5-2" class="text-sm">Navigation guard verifica se sessao nao expirou</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth5-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth5-3" class="text-sm">Rotas /guest/* protegidas pelo guard</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth5-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth5-4" class="text-sm">Sessao expirada redireciona para /guest/erro</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth5-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth5-5" class="text-sm">401 da API limpa sessao e redireciona</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 6) Admin - Geracao de Links -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              6) Admin - Geracao de Links
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-6"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-6">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth6-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth6-1" class="text-sm">Endpoint POST /admin/eventos/{id}/pax/{paxId}/gerar-magic-link</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth6-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth6-2" class="text-sm">Botao "Gerar Link" no painel admin por pax</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth6-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth6-3" class="text-sm">Link exibido mascarado com botao "Copiar"</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth6-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth6-4" class="text-sm">Confirmacao antes de regerar (revoga anterior)</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth6-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth6-5" class="text-sm">Geracao em lote na importacao de pax</label>
+              </div>
+            </div>
+          </details>
+
+          <!-- 7) Seguranca -->
+          <details class="bg-gray-800 rounded-lg overflow-hidden">
+            <summary class="p-4 font-semibold text-white bg-gray-700 hover:bg-gray-600">
+              7) Seguranca
+              <span class="float-right text-sm font-normal text-gray-400" data-section-progress="section-7"></span>
+            </summary>
+            <div class="p-4 space-y-2" id="section-7">
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth7-1" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth7-1" class="text-sm">Token nao aparece em logs do servidor</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth7-2" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth7-2" class="text-sm">Token nao aparece em logs do frontend</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth7-3" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth7-3" class="text-sm">HTTPS obrigatorio em producao</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth7-4" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth7-4" class="text-sm">Rate limiting no endpoint /guest/session</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth7-5" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth7-5" class="text-sm">Chave de criptografia em variavel de ambiente</label>
+              </div>
+              <div class="checkbox-item flex items-start gap-3">
+                <input type="checkbox" id="auth7-6" class="mt-1 w-4 h-4 accent-green-500">
+                <label for="auth7-6" class="text-sm">Token funciona em multiplos dispositivos (MVP)</label>
+              </div>
+            </div>
+          </details>
+
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-8 flex gap-4 flex-wrap">
+          <button onclick="resetAll()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-sm font-medium">
+            Resetar Tudo
+          </button>
+          <button onclick="exportState()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium">
+            Exportar JSON
+          </button>
+          <label class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-medium cursor-pointer">
+            Importar JSON
+            <input type="file" accept=".json" onchange="importState(event)" class="hidden">
+          </label>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-gray-700 text-center text-gray-500 text-sm">
+          <p>Match de Hospedagem - I GO Eventos</p>
+          <p class="mt-1">Autenticacao - Documentacao Tecnica</p>
+        </footer>
+
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'match-autenticacao-checklist';
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved);
+        Object.keys(state).forEach(id => {
+          const checkbox = document.getElementById(id);
+          if (checkbox) checkbox.checked = state[id];
+        });
+      }
+    }
+
+    function saveState() {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      const state = {};
+      checkboxes.forEach(cb => {
+        state[cb.id] = cb.checked;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function updateProgress() {
+      const sections = [];
+      for (let i = 1; i <= 7; i++) {
+        sections.push(`section-${i}`);
+      }
+
+      let totalChecked = 0;
+      let totalItems = 0;
+
+      sections.forEach(sectionId => {
+        const section = document.getElementById(sectionId);
+        if (!section) return;
+
+        const checkboxes = section.querySelectorAll('input[type="checkbox"]');
+        const checked = section.querySelectorAll('input[type="checkbox"]:checked').length;
+        const total = checkboxes.length;
+
+        totalChecked += checked;
+        totalItems += total;
+
+        const progressSpan = document.querySelector(`[data-section-progress="${sectionId}"]`);
+        if (progressSpan) {
+          const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+          progressSpan.textContent = `${checked}/${total} (${pct}%)`;
+          progressSpan.className = `float-right text-sm font-normal ${pct === 100 ? 'text-green-400' : 'text-gray-400'}`;
+        }
+      });
+
+      const globalPct = totalItems > 0 ? Math.round((totalChecked / totalItems) * 100) : 0;
+      document.getElementById('page-progress').style.width = `${globalPct}%`;
+      document.getElementById('page-progress-text').textContent = `${globalPct}%`;
+    }
+
+    function resetAll() {
+      if (!confirm('Tem certeza que deseja resetar todos os itens desta pagina?')) return;
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+      saveState();
+      updateProgress();
+    }
+
+    function exportState() {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      const state = {};
+      checkboxes.forEach(cb => {
+        state[cb.id] = cb.checked;
+      });
+
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `autenticacao-checklist-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importState(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const state = JSON.parse(e.target.result);
+          Object.keys(state).forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) checkbox.checked = state[id];
+          });
+          saveState();
+          updateProgress();
+          alert('Estado importado com sucesso!');
+        } catch (err) {
+          alert('Erro ao importar arquivo: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      updateProgress();
+
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          saveState();
+          updateProgress();
+        });
+      });
+    });
+  </script>
+</body>
+</html>
